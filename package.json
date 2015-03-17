@@ -1,0 +1,19 @@
+{
+  "name": "ng-keyboard",
+  "version": "0.1.0",
+  "description": "Keyboard shortcuts for angular apps",
+  "main": "src/module.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Michael van Engelshoven <michael@van-engelshoven.de>",
+  "license": "MIT",
+  "dependencies": {
+    "browserify": "^9.0.3",
+    "gulp": "^3.8.11",
+    "gulp-sourcemaps": "^1.5.0",
+    "gulp-uglify": "^1.1.0",
+    "lodash": "^3.5.0",
+    "vinyl-transform": "^1.0.0"
+  }
+}
