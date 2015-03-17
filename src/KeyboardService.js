@@ -224,8 +224,6 @@ module.exports = function KeyboardService($$keyboardParser, $document, $window, 
         });
 
         bindings.sort(sortByPriority);
-
-        console.info(bindings);
     }
 
     return {
