@@ -11,7 +11,7 @@ var _ = require('lodash');
  * @param {angular.$log} $log
  * @returns {{enable: function(), disable: function(), reset: function(), on: function()}}
  */
-module.exports = function KeyboardService($$keyboardParser, $document, $window, $log) {
+module.exports = function KeyboardService($$keyboardParser, $document, $window, $log, $rootScope) {
 
     /**
      * Array of currently active (held down) keyCodes
@@ -180,7 +180,9 @@ module.exports = function KeyboardService($$keyboardParser, $document, $window, 
         });
 
         if (firstMatch && isSatisfiedCombo(firstMatch.sequence[0])) {
-            firstMatch.callback(event);
+            $rootScope.$apply(function() {
+                firstMatch.callback(event);
+            });
         }
     }
 
