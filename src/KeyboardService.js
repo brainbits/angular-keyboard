@@ -5,13 +5,14 @@ var _ = require('lodash');
  *
  * Watches keyup and keydown events and executes registered binding when they match
  *
+ * @constructor
  * @param {function(string):Array.<Array.<Array.<number>>>} $$keyboardParser
  * @param {angular.$document} $document
  * @param {Window} $window
  * @param {angular.$log} $log
- * @returns {{enable: function(), disable: function(), reset: function(), on: function()}}
+ * @param {angular.scope} $rootScope
  */
-module.exports = function KeyboardService($$keyboardParser, $document, $window, $log, $rootScope) {
+module.exports = ["$$keyboardParser", "$document", "$window", "$log", "$rootScope", function KeyboardService($$keyboardParser, $document, $window, $log, $rootScope) {
 
     /**
      * Array of currently active (held down) keyCodes
@@ -42,25 +43,6 @@ module.exports = function KeyboardService($$keyboardParser, $document, $window, 
     function reset() {
         activeKeys = [];
         currentSequences = [];
-    }
-
-    /**
-     * Enables KeyboardJS
-     */
-    function enable() {
-        $document.on('keydown', keydown);
-        $document.on('keyup', keyup);
-        $window.on('blur mozfullscreenchange webkitfullscreenchange', reset);
-    }
-
-    /**
-     * Exits all active bindings and disables KeyboardJS
-     */
-    function disable() {
-        reset();
-        $document.off('keydown', keydown);
-        $document.off('keyup', keyup);
-        $window.off('blur mozfullscreenchange webkitfullscreenchange', reset);
     }
 
     /**
@@ -197,12 +179,38 @@ module.exports = function KeyboardService($$keyboardParser, $document, $window, 
     }
 
     /**
+     * Enables the listeners
+     *
+     * @return {KeyboardService}
+     */
+    this.enable = function () {
+        $document.on('keydown', keydown);
+        $document.on('keyup', keyup);
+        $window.on('blur mozfullscreenchange webkitfullscreenchange', reset);
+        return this;
+    };
+
+    /**
+     * Exits all active bindings and disables the listernes
+     *
+     * @return {KeyboardService}
+     */
+    this.disable = function () {
+        reset();
+        $document.off('keydown', keydown);
+        $document.off('keyup', keyup);
+        $window.off('blur mozfullscreenchange webkitfullscreenchange', reset);
+        return this;
+    };
+
+    /**
      * Registers a new binding
      *
      * @param {string|{}} combo
      * @param {function?} callback
+     * @return {KeyboardService}
      */
-    function registerBinding(combo, callback) {
+    this.on = function registerBinding(combo, callback) {
         var options = {},
             parent = this;
 
@@ -230,23 +238,25 @@ module.exports = function KeyboardService($$keyboardParser, $document, $window, 
         bindings.sort(sortByPriority);
 
         return this;
-    }
-
-    return {
-        enable: enable,
-        disable: disable,
-        reset: reset,
-        on: registerBinding,
-        bindTo: function(scope) {
-            var newInst = Object.create(this);
-
-            scope.$on('$destroy', function() {
-                bindings = _.reject(bindings, function(binding) {
-                    return binding.parent === newInst;
-                });
-            });
-
-            return newInst;
-        }
     };
-};
+
+    /**
+     * Returns a new $keyboard instance which is bound to the given scope. All key bindings
+     * which are added through this object will be removed when a `$destroy` event is fired on
+     * the given scope.
+     *
+     * @param {angular.Scope} scope
+     * @return {KeyboardService}
+     */
+    this.bindTo = function(scope) {
+        var newInst = Object.create(this);
+
+        scope.$on('$destroy', function() {
+            bindings = _.reject(bindings, function(binding) {
+                return binding.parent === newInst;
+            });
+        });
+
+        return newInst;
+    };
+}];

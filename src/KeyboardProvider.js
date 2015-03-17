@@ -7,8 +7,8 @@ module.exports =  ['$$keyboardParserProvider', function KeyboardProvider($$keybo
     this.addMacro = $$keyboardParserProvider.addMacro;
     this.setMacros = $$keyboardParserProvider.setMacros;
 
-    this.$get = ['$$keyboardParser', '$document', '$window', '$log', '$rootScope', function($$keyboardParser, $document, $window, $log, $rootScope) {
-        var keyboard = KeyboardService($$keyboardParser, $document, $window, $log, $rootScope);
+    this.$get = ['$injector', function($injector) {
+        var keyboard = $injector.instantiate(KeyboardService);
         keyboard.enable();
         return keyboard;
     }];
