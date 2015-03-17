@@ -203,7 +203,8 @@ module.exports = function KeyboardService($$keyboardParser, $document, $window, 
      * @param {function?} callback
      */
     function registerBinding(combo, callback) {
-        var options;
+        var options = {},
+            parent = this;
 
         // Fallback if an object with further options was passed
         if (typeof combo === "object") {
@@ -215,6 +216,7 @@ module.exports = function KeyboardService($$keyboardParser, $document, $window, 
         // Parse combos and add binding for each combo
         $$keyboardParser(combo).forEach(function(comboSequence) {
             var binding = {
+                parent: parent,
                 sequence: comboSequence,
                 callback: callback,
                 priority: options.priority || getPriorityBySequence(comboSequence),
@@ -226,12 +228,25 @@ module.exports = function KeyboardService($$keyboardParser, $document, $window, 
         });
 
         bindings.sort(sortByPriority);
+
+        return this;
     }
 
     return {
         enable: enable,
         disable: disable,
         reset: reset,
-        on: registerBinding
-    }
+        on: registerBinding,
+        bindTo: function(scope) {
+            var newInst = Object.create(this);
+
+            scope.$on('$destroy', function() {
+                bindings = _.reject(bindings, function(binding) {
+                    return binding.parent === newInst;
+                });
+            });
+
+            return newInst;
+        }
+    };
 };
