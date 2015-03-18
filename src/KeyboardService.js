@@ -163,7 +163,10 @@ module.exports = ["$$keyboardParser", "$document", "$window", "$log", "$rootScop
 
         if (firstMatch && isSatisfiedCombo(firstMatch.sequence[0])) {
             $rootScope.$apply(function() {
-                firstMatch.callback(event);
+                if (firstMatch.callback(event) === false {
+                    stopPropagation(event);
+                    preventDefault(event);
+                }
             });
         }
     }
@@ -176,6 +179,36 @@ module.exports = ["$$keyboardParser", "$document", "$window", "$log", "$rootScop
      */
     function sortByPriority(a, b) {
         return b.priority - a.priority;
+    }
+
+    /**
+     * prevents default for this event
+     *
+     * @param {Event} event
+     * @returns void
+     */
+    function preventDefault(event) {
+        if (event.preventDefault) {
+            event.preventDefault();
+            return;
+        }
+
+        event.returnValue = false;
+    }
+
+    /**
+     * Stops propogation for this event
+     *
+     * @param {Event} event
+     * @returns void
+     */
+    function stopPropagation(event) {
+        if (event.stopPropagation) {
+            event.stopPropagation();
+            return;
+        }
+
+        event.cancelBubble = true;
     }
 
     /**
