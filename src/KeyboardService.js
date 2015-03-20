@@ -163,7 +163,7 @@ module.exports = ["$$keyboardParser", "$document", "$window", "$log", "$rootScop
 
         if (firstMatch && isSatisfiedCombo(firstMatch.sequence[0])) {
             $rootScope.$apply(function() {
-                if (firstMatch.callback(event) === false {
+                if (firstMatch.callback(event) === false) {
                     stopPropagation(event);
                     preventDefault(event);
                 }

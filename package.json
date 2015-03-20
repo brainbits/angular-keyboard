@@ -26,6 +26,6 @@
     "karma-chrome-launcher": "^0.1.7",
     "karma-mocha": "^0.1.10",
     "karma-sinon": "^1.0.4",
-    "karma-sinon-chai": "^0.3.0",
+    "karma-sinon-chai": "^0.3.0"
   }
 }
