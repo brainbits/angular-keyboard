@@ -6,6 +6,7 @@ var transform = require('vinyl-transform');
 var uglify = require('gulp-uglify');
 var sourcemaps = require('gulp-sourcemaps');
 var rename = require('gulp-rename');
+var karma = require('gulp-karma');
 
 // Rerun the task when a file changes
 gulp.task('watch', ['javascript'], function() {
@@ -26,6 +27,26 @@ gulp.task('javascript', function () {
         .pipe(rename('ng-keyboard.js'))
         .pipe(sourcemaps.write('./'))
         .pipe(gulp.dest('./build'));
+});
+
+gulp.task('test', ['javascript'], function() {
+
+    gulp.src([
+            'node_modules/angular/angular.js',
+            'node_modules/angular-mocks/angular-mocks.js',
+            'build/ng-keyboard.js',
+            'test/**/*Test.js'
+        ])
+        .pipe(karma({
+            frameworks: ['mocha', 'chai', 'sinon', 'sinon-chai'],
+            browsers: ['Chrome'],
+            client: {
+                captureConsole: true,
+                mocha: {
+                    reporter: 'spec'
+                }
+            }
+        }));
 });
 
 gulp.task('default', ['javascript']);
