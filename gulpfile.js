@@ -21,7 +21,7 @@ gulp.task('build', function () {
         .pipe(uglify({mangle: false}))
         .pipe(rename('ng-keyboard.js'))
         .pipe(sourcemaps.write('./'))
-        .pipe(gulp.dest('./build'));
+        .pipe(gulp.dest('./dist'));
 
     function browserifyTransform() {
         return through2.obj(function (file, enc, next) {

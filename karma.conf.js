@@ -3,7 +3,7 @@ module.exports = function(config) {
         "files": [
             require.resolve('angular/angular.js'),
             require.resolve('angular-mocks/angular-mocks.js'),
-            'build/ng-keyboard.js',
+            'dist/ng-keyboard.js',
             'test/**/*Test.js'
         ],
         "frameworks": ['mocha', 'chai', 'sinon', 'sinon-chai'],
