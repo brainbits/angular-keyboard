@@ -2,7 +2,7 @@
 
 var browserify = require('browserify');
 var gulp = require('gulp');
-var transform = require('vinyl-transform');
+var through2 = require('through2');
 var uglify = require('gulp-uglify');
 var sourcemaps = require('gulp-sourcemaps');
 var rename = require('gulp-rename');
@@ -15,18 +15,23 @@ gulp.task('watch', ['javascript'], function() {
 
 gulp.task('javascript', function () {
 
-    var browserified = transform(function(filename) {
-        var b = browserify({entries: filename, debug: true});
-        return b.bundle();
-    });
-
     return gulp.src('./src/module.js')
-        .pipe(browserified)
+        .pipe(browserifyTransform())
         .pipe(sourcemaps.init({loadMaps: true}))
         .pipe(uglify({mangle: false}))
         .pipe(rename('ng-keyboard.js'))
         .pipe(sourcemaps.write('./'))
         .pipe(gulp.dest('./build'));
+
+    function browserifyTransform() {
+        return through2.obj(function (file, enc, next) {
+            browserify(file.path)
+                .bundle(function(err, res){
+                    file.contents = res;
+                    next(null, file);
+                });
+        });
+    }
 });
 
 gulp.task('test', ['javascript'], function() {
