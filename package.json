@@ -4,7 +4,8 @@
   "description": "Keyboard shortcuts for angular apps",
   "main": "src/module.js",
   "scripts": {
-    "test": "karma start --browsers PhantomJS --single-run"
+    "test": "karma start --browsers PhantomJS --single-run",
+    "build": "gulp build"
   },
   "author": "Michael van Engelshoven <michael@van-engelshoven.de>",
   "license": "MIT",
