@@ -1,6 +1,13 @@
 language: node_js
 node_js:
-  - "0.12"
-
+- '0.12'
 script:
-  - npm test
+- npm test
+deploy:
+  provider: npm
+  email: michael@van-engelshoven.de
+  api_key:
+    secure: RuAeazqCUs4rmgX9efoad6dqJzSrf/uTIY+hIDcFVMTYUVfTfkgZ2b6uHM5skCZui8JycbnPC1/B9vI0hOp/F6V4Igoy+hyTNR4tUE4yOwfAn68Ro9Mqr4/4J69YhhpQ6q9SuULs73COrbtKqveyrCeO/mJI+vLIQMfvClyE0Kw=
+  on:
+    tags: true
+    repo: brainbits/angular-keyboard
