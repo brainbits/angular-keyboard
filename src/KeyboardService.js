@@ -35,6 +35,13 @@ module.exports = ["$$keyboardParser", "$document", "$window", "$log", "$rootScop
      */
     var currentSequences = [];
 
+    /**
+     * A counter which is used to prioretize bindings if their priority is identical
+     *
+     * @type {Number}
+     */
+    var bindingCounter = 0;
+
     $window = angular.element($window);
 
     /**
@@ -58,7 +65,6 @@ module.exports = ["$$keyboardParser", "$document", "$window", "$log", "$rootScop
         }
 
         activeKeys.push(event.keyCode);
-
 
         var satisfiableBindings = _.filter(bindings, isSatisfiable);
 
@@ -153,21 +159,44 @@ module.exports = ["$$keyboardParser", "$document", "$window", "$log", "$rootScop
      * @param {Event} event
      */
     function executeFirstMatch(event) {
-
-        var firstMatch = _.find(currentSequences, function(binding) {
-            return binding.sequence.length === 1
-                && isSatisfiable(binding)
-                && binding.action === event.type
-                && !angular.element(event.target).is(binding.ignore);
-        });
-
-        if (firstMatch && isSatisfiedCombo(firstMatch.sequence[0])) {
-            $rootScope.$apply(function() {
-                if (firstMatch.callback(event) === false) {
-                    stopPropagation(event);
-                    preventDefault(event);
-                }
+        var callbacks = currentSequences
+            .filter(function (binding) {
+                return binding.sequence.length === 1
+                    && isSatisfiable(binding)
+                    && binding.action === event.type
+                    && !angular.element(event.target).is(binding.ignore)
+                    && isSatisfiedCombo(binding.sequence[0]);
+            })
+            .map(function (match, idx, matches) {
+                return match.callback;
             });
+
+        $rootScope.$apply(function() {
+            if (createWrappedCallback(callbacks, 0, event)() === false) {
+                stopPropagation(event);
+                preventDefault(event);
+            }
+        });
+    }
+
+    /**
+     * Return a function which wraps the callback at the given index.
+     *
+     * This function will be called recursivly for all further callbacks in the array and will provide the wrapper
+     * function of the *next* callback as parameter to the *current* callback function.
+     *
+     * @param {Function[]} callbacks - Array of callback functions
+     * @param {Number} idx - Index of the callback function that should be wrapped
+     * @param {Object} event - The keyboard event that should be given to the callbacks
+     *
+     * @returns {Function} wrapper function which will call the original callback
+     */
+    function createWrappedCallback(callbacks, idx, event) {
+        var callback = callbacks[idx];
+        return function () {
+            if (callback) {
+                return callback(event, createWrappedCallback(callbacks, idx+1, event));
+            }
         }
     }
 
@@ -178,7 +207,13 @@ module.exports = ["$$keyboardParser", "$document", "$window", "$log", "$rootScop
      * @returns {number}
      */
     function sortByPriority(a, b) {
-        return b.priority - a.priority;
+        var priorityDiff = b.priority - a.priority;
+
+        if (priorityDiff === 0) {
+            return b.counter - a.counter;
+        }
+
+        return priorityDiff;
     }
 
     /**
@@ -262,7 +297,8 @@ module.exports = ["$$keyboardParser", "$document", "$window", "$log", "$rootScop
                 callback: callback,
                 priority: options.priority || getPriorityBySequence(comboSequence),
                 action: options.action || 'keydown',
-                ignore: options.ignore || 'input, select, textarea'
+                ignore: options.ignore || 'input, select, textarea',
+                counter: bindingCounter++
             };
             // Last come first serve
             bindings.unshift(binding);
