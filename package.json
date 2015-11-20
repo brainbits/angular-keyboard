@@ -1,6 +1,6 @@
 {
   "name": "ng-keyboard",
-  "version": "0.1.0",
+  "version": "0.2.1",
   "description": "Keyboard shortcuts for angular apps",
   "main": "src/module.js",
   "scripts": {
