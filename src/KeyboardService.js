@@ -43,11 +43,18 @@ module.exports = ["$$keyboardParser", "$document", "$window", "$log", "$rootScop
     var bindingCounter = 0;
 
     /**
+     * Global instance counter which is increased for each new instance
+     *
+     * @type {Number}
+     */
+    var instanceCounter = 0;
+
+    /**
      * Set the instanceCounter for the initial instance
      *
      * @type {Number}
      */
-    this.instanceCounter = 0;
+    this.instanceCounter = instanceCounter++;
 
     $window = angular.element($window);
 
@@ -343,7 +350,7 @@ module.exports = ["$$keyboardParser", "$document", "$window", "$log", "$rootScop
      */
     this.bindTo = function(scope) {
         var newInst = Object.create(this);
-        newInst.instanceCounter = this.instanceCounter + 1;
+        newInst.instanceCounter = instanceCounter++;
 
         scope.$on('$destroy', function() {
             bindings = _.reject(bindings, function(binding) {
