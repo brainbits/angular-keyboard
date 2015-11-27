@@ -42,6 +42,13 @@ module.exports = ["$$keyboardParser", "$document", "$window", "$log", "$rootScop
      */
     var bindingCounter = 0;
 
+    /**
+     * Set the instanceCounter for the initial instance
+     *
+     * @type {Number}
+     */
+    this.instanceCounter = 0;
+
     $window = angular.element($window);
 
     /**
@@ -93,7 +100,7 @@ module.exports = ["$$keyboardParser", "$document", "$window", "$log", "$rootScop
 
         // Remove already satisfied combos
         currentSequences.forEach(function(binding) {
-            if (isSatisfiedCombo(binding.sequence[0])) {
+            if (binding.sequence && isSatisfiedCombo(binding.sequence[0])) {
                 binding.sequence.shift();
             }
         });
@@ -102,11 +109,16 @@ module.exports = ["$$keyboardParser", "$document", "$window", "$log", "$rootScop
 
         // Remove all sequences which are fully burned
         currentSequences = _.filter(currentSequences, function(binding) {
-            return binding.sequence.length > 0;
+            return binding.sequence === null || binding.sequence.length > 0;
         });
 
         // Remove all sequences which are not anymore satisfiable
         currentSequences = _.filter(currentSequences, isSatisfiable);
+
+        // Remove all remaining bindings if only catchAlls are left
+        if (_.all(currentSequences, {sequence: null})) {
+            currentSequences.length = 0;
+        }
     }
 
     /**
@@ -133,7 +145,10 @@ module.exports = ["$$keyboardParser", "$document", "$window", "$log", "$rootScop
      * @returns {*}
      */
     function isSatisfiable(binding) {
-        var combo = binding.sequence[0];
+        var combo;
+        if (binding.sequence === null) return true;
+
+        combo = binding.sequence[0];
 
         return _.all(activeKeys, function(keyCode) {
             return combo.indexOf(keyCode) !== -1;
@@ -161,6 +176,8 @@ module.exports = ["$$keyboardParser", "$document", "$window", "$log", "$rootScop
     function executeFirstMatch(event) {
         var callbacks = currentSequences
             .filter(function (binding) {
+                if (binding.sequence === null) return true;
+
                 return binding.sequence.length === 1
                     && isSatisfiable(binding)
                     && binding.action === event.type
@@ -207,13 +224,19 @@ module.exports = ["$$keyboardParser", "$document", "$window", "$log", "$rootScop
      * @returns {number}
      */
     function sortByPriority(a, b) {
+        var parentPriortityDiff = b.parent.instanceCounter - a.parent.instanceCounter;
+        var bindingCounterDiff = b.counter - a.counter;
         var priorityDiff = b.priority - a.priority;
 
-        if (priorityDiff === 0) {
-            return b.counter - a.counter;
+        if (parentPriortityDiff !== 0) {
+            return parentPriortityDiff;
         }
 
-        return priorityDiff;
+        if (priorityDiff !== 0) {
+            return priorityDiff;
+        }
+
+        return bindingCounterDiff;
     }
 
     /**
@@ -298,7 +321,8 @@ module.exports = ["$$keyboardParser", "$document", "$window", "$log", "$rootScop
                 priority: options.priority || getPriorityBySequence(comboSequence),
                 action: options.action || 'keydown',
                 ignore: options.ignore || 'input, select, textarea',
-                counter: bindingCounter++
+                counter: bindingCounter++,
+                combo: combo
             };
             // Last come first serve
             bindings.unshift(binding);
@@ -319,6 +343,7 @@ module.exports = ["$$keyboardParser", "$document", "$window", "$log", "$rootScop
      */
     this.bindTo = function(scope) {
         var newInst = Object.create(this);
+        newInst.instanceCounter = this.instanceCounter + 1;
 
         scope.$on('$destroy', function() {
             bindings = _.reject(bindings, function(binding) {
@@ -327,5 +352,38 @@ module.exports = ["$$keyboardParser", "$document", "$window", "$log", "$rootScop
         });
 
         return newInst;
+    };
+
+    /**
+     * Add a new callback that binds to all keybindings that were not added on the current instance (see bindTo).
+     *
+     * @param {function?} callback
+     * @return {KeyboardService}
+     */
+    this.catchAll = function registerCatchAll(callback) {
+        var options = {};
+
+        // Fallback if an object with further options was passed
+        if (typeof callback === "object") {
+            options = callback;
+            callback = options.callback;
+        }
+
+        // Parse combos and add binding for each combo
+        var binding = {
+            parent: this,
+            sequence: null,
+            callback: callback,
+            priority: options.priority || -Infinity,
+            action: options.action || 'keydown',
+            ignore: options.ignore || 'input, select, textarea',
+            counter: bindingCounter++
+        };
+        // Last come first serve
+        bindings.unshift(binding);
+
+        bindings.sort(sortByPriority);
+
+        return this;
     };
 }];
